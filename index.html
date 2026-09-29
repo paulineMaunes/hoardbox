@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HoardBox v3.9</title>
+    <title>HoardBox v3.10</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for cute icons -->
@@ -443,7 +443,7 @@
                 <div class="space-y-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="font-bold text-lg text-rose-600">Categories 🏷️️</h2>
+                            <h2 class="font-bold text-lg text-rose-600">Categories 🏷</h2>
                             <p class="text-xs text-gray-400">Organize your collection with cute icons & colors</p>
                         </div>
                         <button onclick="openAddCategoryModal()" class="px-4 py-2 bg-rose-500 text-white rounded-full text-xs font-semibold hover:bg-rose-600 transition shadow-sm whitespace-nowrap">
@@ -783,14 +783,14 @@
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </div>
                         <h3 class="font-bold text-lg text-rose-600">AI Image Analyzer v3.9 📸</h3>
-                        <p class="text-xs text-gray-500">Snap or upload a photo of an item. The AI analyzer will identify it and suggest storage category and sizing details!</p>
+                        <p class="text-xs text-gray-500">Snap or upload a photo of an item. The AI analyzer will identify it and show if/where a similar item is already located!</p>
                         
                         <div class="border-2 border-dashed border-blush-300 rounded-3xl p-6 bg-blush-50 space-y-3">
                             <input type="file" id="ai-ocr-file-input" accept="image/*" onchange="processAIImageAnalysis(event)" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-rose-500 file:text-white hover:file:bg-rose-600">
                         </div>
 
                         <div id="ocr-results-area" class="hidden text-left bg-blush-50 p-3 rounded-2xl space-y-2">
-                            <p class="text-xs font-bold text-rose-600">AI Analysis & Suggestion:</p>
+                            <p class="text-xs font-bold text-rose-600">AI Analysis & Location Match:</p>
                             <p id="ocr-extracted-text" class="text-xs text-gray-700 bg-white p-2 rounded-xl border border-blush-200 max-h-32 overflow-y-auto font-medium"></p>
                             <button id="ocr-action-btn" onclick="saveAIAnalyzedItem()" class="w-full py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold hover:bg-rose-600 transition shadow-sm">Save Analyzed Item ✨</button>
                         </div>
@@ -820,7 +820,6 @@
                 textElem.innerText = "Examining visual features and text labels...";
 
                 try {
-                    // Fallback to standard intelligent name guessing or lightweight OCR keywords combined with smart recognition heuristics
                     const worker = await Tesseract.createWorker('eng');
                     const ret = await worker.recognize(dataUrl);
                     await worker.terminate();
@@ -832,7 +831,6 @@
                     let targetCategory = db.categories[0]?.id || '';
                     let suggestedSize = "Medium Box / Standard Shelf Layer";
 
-                    // Smart keyword recognition example
                     const textLower = rawText.toLowerCase();
                     if (textLower.includes('keyboard') || textLower.includes('keycap') || textLower.includes('switch')) {
                         guessedName = "Mechanical Keyboard";
@@ -850,6 +848,26 @@
                         guessedName = cleanWords.slice(0, 3).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                     }
 
+                    // Check for existing visually/textually similar items in the list
+                    let matchInfo = "No similar existing item found.";
+                    const matchedItem = db.items.find(existing => {
+                        const exName = existing.name.toLowerCase();
+                        const gName = guessedName.toLowerCase();
+                        return exName.includes(gName) || gName.includes(exName) || (cleanWords.some(w => exName.includes(w.toLowerCase())));
+                    });
+
+                    if (matchedItem) {
+                        let matchedLoc = 'Unassigned';
+                        if (matchedItem.boxId) {
+                            const box = db.boxes.find(b => b.id === matchedItem.boxId);
+                            if (box) matchedLoc = `📦 Box: ${box.name}`;
+                        } else if (matchedItem.rackId) {
+                            const rack = db.racks.find(r => r.id === matchedItem.rackId);
+                            if (rack) matchedLoc = `${rack.icon || '🗄️'} ${rack.name} (Layer ${matchedItem.layerIndex + 1})`;
+                        }
+                        matchInfo = `⚠️ Similar item already exists: "${matchedItem.name}" -> Currently located at: ${matchedLoc}`;
+                    }
+
                     window._lastAIAnalysis.name = guessedName;
                     window._lastAIAnalysis.categoryId = targetCategory;
                     window._lastAIAnalysis.notes = `AI Identified Item. Suggested Storage Location: ${suggestedSize}`;
@@ -858,7 +876,7 @@
                     textElem.innerHTML = `
                         🏷️ <strong>Identified Item:</strong> ${guessedName}<br>
                         📂 <strong>Suggested Category:</strong> ${catObj ? catObj.name : 'General'}<br>
-                        📐 <strong>Recommended Storage:</strong> ${suggestedSize}
+                        📍 <strong>Existing Location Match:</strong> ${matchInfo}
                     `;
                     showToast("✨ AI Image Analysis complete!");
                 } catch (err) {
@@ -866,7 +884,7 @@
                     window._lastAIAnalysis.name = "Analyzed Item";
                     window._lastAIAnalysis.categoryId = db.categories[0]?.id || '';
                     window._lastAIAnalysis.notes = "AI Image Analyzer processed image.";
-                    textElem.innerText = "Identified Item: Analyzed Item\nRecommended Storage: Medium Box / Standard Shelf";
+                    textElem.innerText = "Identified Item: Analyzed Item\nExisting Location Match: No similar existing item found.";
                     showToast("✨ Analysis completed.");
                 }
             };
@@ -1324,7 +1342,6 @@
 
         function exportJSONBackup() {
             try {
-                // Ensure ALL database properties including racks, shelves, storage, boxes, items, and image thumbnails are exported
                 const exportPayload = {
                     version: "3.9",
                     exportDate: new Date().toISOString(),
