@@ -1,201 +1,1358 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HoardBox - AI Image Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HoardBox v3.8</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for cute icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tesseract.js for robust in-browser OCR image analysis -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        blush: {
+                            50: '#fff5f7',
+                            100: '#ffe4e8',
+                            200: '#fecdd6',
+                            300: '#fda4b4',
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                        },
+                        sakura: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            200: '#fbcfe8',
+                            300: '#f472b6',
+                            500: '#ec4899',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary-pink: #ff4d6d;
-            --light-bg: #fff0f3;
-            --text-color: #333;
-        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f5f5f7;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            background-color: #fff5f7;
+            color: #4b5563;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
-        .modal {
-            background: #ffffff;
-            width: 90%;
-            max-width: 450px;
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            padding: 24px;
-            box-sizing: border-box;
-            text-align: center;
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-        .header-icon {
-            width: 50px;
-            height: 50px;
-            background: var(--light-bg);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px auto;
-            color: var(--primary-pink);
-            font-size: 24px;
+        ::-webkit-scrollbar-track {
+            background: #ffe4e8;
+            border-radius: 9999px;
         }
-        h2 {
-            margin: 0 0 8px 0;
-            color: var(--text-color);
-            font-size: 20px;
+        ::-webkit-scrollbar-thumb {
+            background: #fda4b4;
+            border-radius: 9999px;
         }
-        p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 24px;
-            line-height: 1.4;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #fb7185;
         }
-        .upload-box {
-            border: 2px dashed #ffb3c1;
-            border-radius: 16px;
-            padding: 20px;
-            background-color: #fffbfe;
-            margin-bottom: 20px;
-            cursor: pointer;
-            transition: background 0.2s;
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
         }
-        .upload-box:hover {
-            background-color: var(--light-bg);
-        }
-        input[type="file"] {
-            display: none;
-        }
-        .file-label {
-            background-color: var(--primary-pink);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 14px;
-            display: inline-block;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        .file-name {
-            font-size: 13px;
-            color: #888;
-            margin-top: 8px;
-        }
-        .result-section {
-            text-align: left;
-            margin-bottom: 20px;
-        }
-        .result-section label {
-            font-size: 12px;
-            font-weight: bold;
-            color: #555;
-            display: block;
-            margin-bottom: 6px;
-        }
-        .result-input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            font-size: 14px;
-            box-sizing: border-box;
-            background-color: #fafafa;
-        }
-        .save-btn {
-            background-color: var(--primary-pink);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 14px;
-            border-radius: 14px;
-            font-weight: bold;
-            font-size: 15px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .save-btn:hover {
-            opacity: 0.9;
-        }
-        .preview-image {
-            max-width: 100%;
-            max-height: 150px;
-            border-radius: 8px;
-            margin-top: 10px;
-            display: none;
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
         }
     </style>
 </head>
-<body>
+<body class="bg-blush-50 min-h-screen pb-28 text-gray-700">
 
-    <div class="modal">
-        <div class="header-icon">✨</div>
-        <h2>HoardBox AI Image Analyzer v3.9 📸</h2>
-        <p>Snap a photo of any item (like your keyboard). Our vision AI will identify the object directly instead of reading random text!</p>
+    <!-- Top Header -->
+    <header class="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-blush-200 px-4 py-3 flex items-center justify-between shadow-sm">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl animate-float">🎀</span>
+            <div>
+                <h1 class="font-bold text-lg text-rose-600 leading-tight">HoardBox <span class="text-xs bg-blush-100 text-rose-500 px-2 py-0.5 rounded-full">v3.8</span></h1>
+                <p class="text-xs text-gray-400">Your aesthetic storage sanctuary ✨</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="openAICameraModal()" class="w-10 h-10 rounded-full bg-blush-100 text-rose-600 flex items-center justify-center hover:bg-blush-200 transition shadow-sm" title="AI Camera OCR Snap & Locate">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </button>
+            <button onclick="openSettingsModal()" class="w-10 h-10 rounded-full bg-blush-100 text-rose-600 flex items-center justify-center hover:bg-blush-200 transition shadow-sm" title="Settings">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
+    </header>
 
-        <div class="upload-box" onclick="document.getElementById('fileInput').click();">
-            <span class="file-label">Choose File</span>
-            <div id="fileStatus" class="file-name">No file chosen</div>
-            <img id="imagePreview" class="preview-image" alt="Preview">
+    <!-- Main Content Area -->
+    <main id="main-content" class="max-w-4xl mx-auto p-4">
+        <!-- Dynamic Views -->
+    </main>
+
+    <!-- Bottom Navigation Bar with Perfectly Centered Floating '+' Button -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-blush-200 px-4 py-2 z-30 shadow-lg flex items-center justify-between">
+        <button onclick="switchTab('items')" id="nav-items" class="flex flex-col items-center justify-center flex-1 py-1 text-rose-500 transition">
+            <i class="fa-solid fa-box-open text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5 whitespace-nowrap">Items</span>
+        </button>
+        <button onclick="switchTab('racks')" id="nav-racks" class="flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-rose-500 transition">
+            <i class="fa-solid fa-layer-group text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5 whitespace-nowrap">Racks</span>
+        </button>
+
+        <!-- Perfectly Centered Floating Action Button -->
+        <div class="relative flex items-center justify-center px-4">
+            <button onclick="openGlobalAddModal()" class="w-14 h-14 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full shadow-lg flex items-center justify-center text-xl hover:scale-105 active:scale-95 transition-all ring-4 ring-white shadow-rose-200">
+                <i class="fa-solid fa-plus"></i>
+            </button>
         </div>
 
-        <div class="result-section">
-            <label>Identified Object:</label>
-            <input type="text" id="detectedItemInput" class="result-input" placeholder="Object name will appear here..." readonly />
-        </div>
+        <button onclick="switchTab('categories')" id="nav-categories" class="flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-rose-500 transition">
+            <i class="fa-solid fa-tags text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5 whitespace-nowrap">Categories</span>
+        </button>
+        <button onclick="switchTab('boxes')" id="nav-boxes" class="flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-rose-500 transition">
+            <i class="fa-solid fa-boxes-stacked text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5 whitespace-nowrap">Boxes</span>
+        </button>
+    </nav>
 
-        <button class="save-btn" onclick="saveItem()">Save as New Item ✨</button>
-    </div>
+    <!-- Modals Container -->
+    <div id="modal-container"></div>
 
+    <!-- Application JavaScript -->
     <script>
-        const fileInput = document.getElementById('fileInput');
-        const fileStatus = document.getElementById('fileStatus');
-        const imagePreview = document.getElementById('imagePreview');
-        const detectedItemInput = document.getElementById('detectedItemInput');
+        let currentTab = 'items';
+        let db = {
+            items: [],
+            racks: [],
+            boxes: [],
+            categories: []
+        };
 
-        // Create a hidden file input dynamically if not in HTML
-        const hiddenInput = document.createElement('input');
-        hiddenInput.type = 'file';
-        hiddenInput.accept = 'image/*';
-        hiddenInput.style.display = 'none';
-        document.body.appendChild(hiddenInput);
+        const DEFAULT_DEMO_DATA = {
+            categories: [
+                { id: 'cat-1', name: 'Kawaii Plushies', icon: 'cat', color: '#fda4b4', isCustomIcon: false },
+                { id: 'cat-2', name: 'Stationery & Washi', icon: 'pencil', color: '#f472b6', isCustomIcon: false },
+                { id: 'cat-3', name: 'Skincare & Beauty', icon: 'pump-soap', color: '#fbcfe8', isCustomIcon: false },
+                { id: 'cat-4', name: 'Electronics & Gadgets', icon: 'laptop', color: '#cbd5e1', isCustomIcon: false }
+            ],
+            racks: [
+                { id: 'rack-pedestal-1', name: '3-Tier Pedestal Cabinet', type: 'pedestal', storageBehavior: 'fixed', icon: '🏛️', layers: 3, isCollapsed: false },
+                { id: 'rack-drawer-1', name: '8-Layer Pink Drawer', type: 'drawer', storageBehavior: 'fixed', icon: '🗄️', layers: 8, isCollapsed: false },
+                { id: 'rack-metal-1', name: '6-Layer Metal Shelf', type: 'metal', storageBehavior: 'multibox', icon: '🏗️', layers: 6, isCollapsed: false }
+            ],
+            boxes: [
+                { id: 'box-big-1', name: 'Big Brown Box #1', type: 'big-brown', icon: '📦', locationId: 'rack-metal-1', layerIndex: 0 },
+                { id: 'box-big-2', name: 'Big Brown Box #2', type: 'big-brown', icon: '📦', locationId: 'rack-metal-1', layerIndex: 1 },
+                { id: 'box-small-1', name: 'Small Brown Box #1', type: 'small-brown', icon: '📦', locationId: 'rack-metal-1', layerIndex: 2 },
+                { id: 'box-free-1', name: 'Unassigned Storage Box', type: 'big-brown', icon: '📦', locationId: null, layerIndex: null }
+            ],
+            items: [
+                { id: 'item-1', name: 'Fluffy Bunny Plush', category: 'cat-1', boxId: null, rackId: 'rack-pedestal-1', layerIndex: 0, photo: 'https://placehold.co/200x200/ffe4e8/e11d48?text=Bunny+Plush', notes: 'Very soft and cute!' },
+                { id: 'item-2', name: 'Pastel Gel Pens Set', category: 'cat-2', boxId: 'box-big-1', rackId: null, layerIndex: null, photo: 'https://placehold.co/200x200/fce7f3/ec4899?text=Gel+Pens', notes: '0.5mm pastel ink' },
+                { id: 'item-3', name: 'Compact Cordless Vacuum', category: 'cat-4', boxId: null, rackId: 'rack-metal-1', layerIndex: 3, photo: 'https://placehold.co/200x200/f1f5f9/475569?text=Vacuum', notes: 'Stored directly on metal shelf tier' }
+            ]
+        };
 
-        document.querySelector('.upload-box').addEventListener('click', () => {
-            hiddenInput.click();
-        });
-
-        hiddenInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                fileStatus.textContent = file.name;
-                
-                // Show local image preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-
-                // Simulate Smart Object Recognition (Replace this with your actual backend/AI call)
-                detectedItemInput.value = "Analyzing object shape...";
-                setTimeout(() => {
-                    // Smart detection output replacing old Tesseract OCR text blocks
-                    detectedItemInput.value = "Wireless Keyboard"; 
-                }, 1000);
+        function saveDB() {
+            try {
+                localStorage.setItem('hoardbox_v38_db', JSON.stringify(db));
+            } catch (e) {
+                console.error("Storage save failed:", e);
             }
-        });
+        }
 
-        function saveItem() {
-            const itemName = detectedItemInput.value;
-            if (!itemName || itemName.includes("Analyzing")) {
-                alert("Please select a valid image first!");
+        function loadDB() {
+            try {
+                const saved = localStorage.getItem('hoardbox_v38_db');
+                if (saved) {
+                    db = JSON.parse(saved);
+                    if (!db.items) db.items = [];
+                    if (!db.racks) db.racks = [];
+                    if (!db.boxes) db.boxes = [];
+                    if (!db.categories) db.categories = [];
+                } else {
+                    resetToFactoryDefaults(false);
+                }
+            } catch (e) {
+                console.error("Storage load failed, restoring defaults:", e);
+                resetToFactoryDefaults(false);
+            }
+        }
+
+        function resetToFactoryDefaults(showAlert = true) {
+            db = JSON.parse(JSON.stringify(DEFAULT_DEMO_DATA));
+            saveDB();
+            renderCurrentView();
+            if (showAlert) {
+                showToast("✨ Reset to factory defaults successfully!");
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            ['items', 'racks', 'categories', 'boxes'].forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                if (t === tab) {
+                    btn.classList.remove('text-gray-400');
+                    btn.classList.add('text-rose-500');
+                } else {
+                    btn.classList.remove('text-rose-500');
+                    btn.classList.add('text-gray-400');
+                }
+            });
+            renderCurrentView();
+        }
+
+        function renderCurrentView() {
+            const container = document.getElementById('main-content');
+            container.innerHTML = '';
+            if (currentTab === 'items') renderItemsView(container);
+            else if (currentTab === 'racks') renderRacksView(container);
+            else if (currentTab === 'categories') renderCategoriesView(container);
+            else if (currentTab === 'boxes') renderBoxesView(container);
+        }
+
+        function renderItemsView(container) {
+            const searchQuery = window._itemSearch || '';
+            const selectedCat = window._itemCatFilter || '';
+
+            const filteredItems = db.items.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || (item.notes && item.notes.toLowerCase().includes(searchQuery.toLowerCase()));
+                const matchesCat = !selectedCat || item.category === selectedCat;
+                return matchesSearch && matchesCat;
+            });
+
+            let html = `
+                <div class="space-y-4">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-search absolute left-3 top-3.5 text-gray-400 text-sm"></i>
+                            <input type="text" id="item-search-input" value="${searchQuery}" oninput="filterItemsSearch(this.value)" placeholder="Search all hoards & treasures (v3.8)..." class="w-full pl-10 pr-4 py-2 bg-white rounded-full border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-sm">
+                        </div>
+                        <select id="item-cat-filter" onchange="filterItemsCategory(this.value)" class="px-4 py-2 bg-white rounded-full border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-sm">
+                            <option value="">All Categories</option>
+                            ${db.categories.map(c => `<option value="${c.id}" ${selectedCat === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            `;
+
+            if (filteredItems.length === 0) {
+                html += `
+                    <div class="col-span-full py-12 text-center bg-white rounded-3xl border border-blush-200 shadow-sm p-6">
+                        <span class="text-4xl block mb-2">📦</span>
+                        <h3 class="font-semibold text-gray-600">No items found</h3>
+                        <p class="text-xs text-gray-400 mt-1">Tap the plus button below to add your first treasure!</p>
+                    </div>
+                `;
+            } else {
+                filteredItems.forEach(item => {
+                    const cat = db.categories.find(c => c.id === item.category) || { name: 'Uncategorized', icon: 'tag', color: '#cbd5e1', isCustomIcon: false };
+                    let locationName = 'Unassigned';
+                    if (item.boxId) {
+                        const box = db.boxes.find(b => b.id === item.boxId);
+                        if (box) locationName = `📦 ${box.name}`;
+                    } else if (item.rackId) {
+                        const rack = db.racks.find(r => r.id === item.rackId);
+                        if (rack) locationName = `${rack.icon || '🗄️'} ${rack.name} (Layer ${item.layerIndex + 1})`;
+                    }
+
+                    const catIconHtml = cat.isCustomIcon ? `<span class="mr-1">${cat.icon}</span>` : `<i class="fa-solid fa-${cat.icon} mr-1"></i>`;
+
+                    html += `
+                        <div class="bg-white rounded-3xl p-4 border border-blush-200 shadow-sm flex flex-col justify-between hover:shadow-md transition">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-xs px-2.5 py-1 rounded-full text-white font-medium flex items-center" style="background-color: ${cat.color}">
+                                        ${catIconHtml} ${cat.name}
+                                    </span>
+                                    <div class="flex space-x-1">
+                                        <button onclick="openEditItemModal('${item.id}')" class="w-8 h-8 rounded-full bg-blush-50 text-rose-500 flex items-center justify-center hover:bg-blush-100 transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <button onclick="confirmDeleteItem('${item.id}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-3 mb-3">
+                                    <img src="${item.photo}" onerror="this.src='https://placehold.co/100x100/ffe4e8/e11d48?text=Image'" class="w-16 h-16 rounded-2xl object-cover border border-blush-100 flex-shrink-0">
+                                    <div class="overflow-hidden">
+                                        <h3 class="font-semibold text-gray-800 truncate">${item.name}</h3>
+                                        <p class="text-xs text-gray-400 mt-0.5 line-clamp-2">${item.notes || 'No notes added.'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-3 border-t border-blush-50 flex items-center justify-between text-xs text-gray-500">
+                                <span class="truncate font-medium"><i class="fa-solid fa-location-dot text-rose-400 mr-1"></i> ${locationName}</span>
+                                <button onclick="openLocateModal('${item.id}')" class="text-rose-500 hover:underline font-medium flex-shrink-0 ml-2 whitespace-nowrap">Locate 🔍</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        function filterItemsSearch(val) {
+            window._itemSearch = val;
+            renderItemsView(document.getElementById('main-content'));
+        }
+
+        function filterItemsCategory(val) {
+            window._itemCatFilter = val;
+            renderItemsView(document.getElementById('main-content'));
+        }
+
+        function renderRacksView(container) {
+            let html = `
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="font-bold text-lg text-rose-600">Storage Furniture & Racks v3.8 🗄️</h2>
+                            <p class="text-xs text-gray-400">Configure cabinets, drawers, and customizable shelf units</p>
+                        </div>
+                        <button onclick="openAddRackModal()" class="px-4 py-2 bg-rose-500 text-white rounded-full text-xs font-semibold hover:bg-rose-600 transition shadow-sm whitespace-nowrap">
+                            <i class="fa-solid fa-plus mr-1"></i> Add Rack
+                        </button>
+                    </div>
+
+                    <div class="space-y-6">
+            `;
+
+            db.racks.forEach(rack => {
+                const isCollapsed = rack.isCollapsed || false;
+                const behaviorText = rack.storageBehavior === 'multibox' ? 'Multi-Box / Multi-Item Shelf' : 'Fixed Layers Only';
+                html += `
+                    <div class="bg-white rounded-3xl p-5 border border-blush-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3 cursor-pointer" onclick="toggleRackCollapse('${rack.id}')">
+                                <div class="w-10 h-10 rounded-2xl bg-blush-100 text-rose-600 flex items-center justify-center text-lg">
+                                    ${rack.icon || '🗄️'}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800 flex items-center">${rack.name} <i class="fa-solid fa-chevron-${isCollapsed ? 'down' : 'up'} ml-2 text-xs text-gray-400"></i></h3>
+                                    <p class="text-xs text-gray-400 capitalize">${rack.type} • ${rack.layers} Layers • <span class="text-rose-500 font-medium">${behaviorText}</span></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <button onclick="openEditRackModal('${rack.id}')" class="w-8 h-8 rounded-full bg-blush-50 text-rose-500 flex items-center justify-center hover:bg-blush-100 transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                                <button onclick="confirmDeleteRack('${rack.id}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </div>
+                        </div>
+                `;
+
+                if (!isCollapsed) {
+                    html += `<div class="space-y-3 pl-2 border-l-2 border-blush-200 ml-3">`;
+                    for (let l = 0; l < rack.layers; l++) {
+                        const layerItems = db.items.filter(i => i.rackId === rack.id && i.layerIndex === l);
+                        const layerBoxes = rack.storageBehavior === 'multibox' ? db.boxes.filter(b => b.locationId === rack.id && b.layerIndex === l) : [];
+
+                        html += `
+                            <div class="bg-blush-50/50 rounded-2xl p-3 border border-blush-100">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold text-rose-600">Layer ${l + 1}</span>
+                                    <div class="flex space-x-2">
+                                        <button onclick="openQuickAddItemToLayer('${rack.id}', ${l})" class="text-[10px] bg-white text-rose-500 px-2 py-1 rounded-full border border-blush-200 hover:bg-blush-100 font-medium transition whitespace-nowrap">+ Add Item</button>
+                                        ${rack.storageBehavior === 'multibox' ? `<button onclick="openQuickAddBoxToLayer('${rack.id}',${l})" class="text-[10px] bg-white text-rose-500 px-2 py-1 rounded-full border border-blush-200 hover:bg-blush-100 font-medium transition whitespace-nowrap">+ Add Box</button>` : ''}
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                        `;
+
+                        if (layerItems.length === 0 && layerBoxes.length === 0) {
+                            html += `<span class="text-xs text-gray-400 italic">Empty layer</span>`;
+                        }
+
+                        layerBoxes.forEach(box => {
+                            const boxItemsCount = db.items.filter(i => i.boxId === box.id).length;
+                            html += `
+                                <div class="bg-white rounded-xl px-3 py-2 border border-blush-200 flex items-center space-x-2 shadow-xs">
+                                    <span class="text-sm">${box.icon || '📦'}</span>
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-700">${box.name}</p>
+                                        <p class="text-[10px] text-gray-400">${boxItemsCount} items inside</p>
+                                    </div>
+                                    <button onclick="unlinkBox('${box.id}')" class="text-gray-400 hover:text-red-500 ml-2" title="Unlink Box"><i class="fa-solid fa-xmark text-xs"></i></button>
+                                </div>
+                            `;
+                        });
+
+                        layerItems.forEach(item => {
+                            html += `
+                                <div class="bg-white rounded-xl px-3 py-2 border border-blush-200 flex items-center space-x-2 shadow-xs">
+                                    <img src="${item.photo}" class="w-7 h-7 rounded-lg object-cover">
+                                    <span class="text-xs font-medium text-gray-700">${item.name}</span>
+                                    <button onclick="unlinkItemFromRack('${item.id}')" class="text-gray-400 hover:text-red-500 ml-2" title="Unlink Item"><i class="fa-solid fa-xmark text-xs"></i></button>
+                                </div>
+                            `;
+                        });
+
+                        html += `</div></div>`;
+                    }
+                    html += `</div>`;
+                }
+
+                html += `</div>`;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        function toggleRackCollapse(rackId) {
+            const rack = db.racks.find(r => r.id === rackId);
+            if (rack) {
+                rack.isCollapsed = !rack.isCollapsed;
+                saveDB();
+                renderCurrentView();
+            }
+        }
+
+        function renderCategoriesView(container) {
+            let html = `
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="font-bold text-lg text-rose-600">Categories 🏷️</h2>
+                            <p class="text-xs text-gray-400">Organize your collection with cute icons & colors</p>
+                        </div>
+                        <button onclick="openAddCategoryModal()" class="px-4 py-2 bg-rose-500 text-white rounded-full text-xs font-semibold hover:bg-rose-600 transition shadow-sm whitespace-nowrap">
+                            <i class="fa-solid fa-plus mr-1"></i> Add Category
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            `;
+
+            db.categories.forEach(cat => {
+                const itemCount = db.items.filter(i => i.category === cat.id).length;
+                const iconDisplay = cat.isCustomIcon ? `<span class="text-xl">${cat.icon}</span>` : `<i class="fa-solid fa-${cat.icon}"></i>`;
+                html += `
+                    <div class="bg-white rounded-3xl p-4 border border-blush-200 shadow-sm flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-lg shadow-sm" style="background-color: ${cat.color}">
+                                ${iconDisplay}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">${cat.name}</h3>
+                                <p class="text-xs text-gray-400">${itemCount} items categorized</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button onclick="openEditCategoryModal('${cat.id}')" class="w-8 h-8 rounded-full bg-blush-50 text-rose-500 flex items-center justify-center hover:bg-blush-100 transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="confirmDeleteCategory('${cat.id}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        function renderBoxesView(container) {
+            let html = `
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="font-bold text-lg text-rose-600">Storage Boxes 📦</h2>
+                            <p class="text-xs text-gray-400">Manage independent boxes and assign them anywhere</p>
+                        </div>
+                        <button onclick="openAddBoxModal()" class="px-4 py-2 bg-rose-500 text-white rounded-full text-xs font-semibold hover:bg-rose-600 transition shadow-sm whitespace-nowrap">
+                            <i class="fa-solid fa-plus mr-1"></i> Add Box
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            `;
+
+            db.boxes.forEach(box => {
+                const boxItems = db.items.filter(i => i.boxId === box.id);
+                let locationText = 'Unassigned / Independent';
+                if (box.locationId) {
+                    const rack = db.racks.find(r => r.id === box.locationId);
+                    if (rack) locationText = `${rack.icon || '🗄️'} ${rack.name} (Layer ${box.layerIndex + 1})`;
+                }
+
+                html += `
+                    <div class="bg-white rounded-3xl p-4 border border-blush-200 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-medium flex items-center">
+                                    <span class="mr-1">${box.icon || '📦'}</span> ${box.type === 'big-brown' ? 'Big Brown' : 'Small Brown'}
+                                </span>
+                                <div class="flex space-x-1">
+                                    <button onclick="openEditBoxModal('${box.id}')" class="w-8 h-8 rounded-full bg-blush-50 text-rose-500 flex items-center justify-center hover:bg-blush-100 transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                                    <button onclick="confirmDeleteBox('${box.id}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-1">${box.name}</h3>
+                            <p class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-location-dot text-rose-400 mr-1"></i> ${locationText}</p>
+                            
+                            <div class="bg-blush-50 rounded-2xl p-3 mb-3">
+                                <p class="text-[10px] font-bold text-rose-600 mb-1">Items Inside (${boxItems.length}):</p>
+                                <div class="space-y-1 max-h-24 overflow-y-auto">
+                                    ${boxItems.length === 0 ? '<span class="text-[10px] text-gray-400 italic">Empty box</span>' : boxItems.map(i => `<div class="text-xs text-gray-700 truncate">• ${i.name}</div>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="openBoxContentsModal('${box.id}')" class="w-full py-2 bg-blush-100 text-rose-600 rounded-full text-xs font-semibold hover:bg-blush-200 transition whitespace-nowrap">
+                            Manage Box Items ✨
+                        </button>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        function showToast(message) {
+            const existing = document.getElementById('toast-notification');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.id = 'toast-notification';
+            toast.className = 'fixed top-16 left-1/2 transform -translate-x-1/2 bg-gray-900/90 backdrop-blur-md text-white px-5 py-2.5 rounded-full text-xs font-medium shadow-xl z-50 transition animate-bounce';
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function closeModal() {
+            document.getElementById('modal-container').innerHTML = '';
+        }
+
+        function openGlobalAddModal() {
+            openEditItemModal(null);
+        }
+
+        function openEditItemModal(itemId) {
+            window._editingItemId = itemId;
+            const item = itemId ? db.items.find(i => i.id === itemId) : { name: '', category: db.categories[0]?.id || '', boxId: '', rackId: '', layerIndex: 0, photo: 'https://placehold.co/200x200/ffe4e8/e11d48?text=Item', notes: '' };
+            
+            let html = `
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-rose-600">${itemId ? 'Edit Treasure ✨' : 'Add New Treasure ✨'}</h3>
+                            <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-blush-50 text-gray-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form onsubmit="saveItem(event, '${itemId || ''}')" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Item Name</label>
+                                <input type="text" id="modal-item-name" required value="${item.name}" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="e.g. Cute Sanrio Plush">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Category</label>
+                                <div class="flex space-x-2">
+                                    <select id="modal-item-cat" class="flex-1 px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                        ${db.categories.map(c => `<option value="${c.id}" ${item.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                    </select>
+                                    <button type="button" onclick="openQuickAddCategoryModal()" class="px-4 py-2 bg-blush-100 text-rose-600 rounded-2xl text-xs font-semibold hover:bg-blush-200 transition whitespace-nowrap">+ New Category</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Photo (Upload Image or Camera Capture)</label>
+                                <div class="flex items-center space-x-3">
+                                    <img id="modal-item-img-preview" src="${item.photo}" class="w-16 h-16 rounded-2xl object-cover border border-blush-200">
+                                    <div class="flex-1 space-y-2">
+                                        <input type="file" accept="image/*" onchange="handleImageUpload(event)" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blush-100 file:text-rose-700 hover:file:bg-blush-200">
+                                        <button type="button" onclick="triggerCameraCapture()" class="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-semibold hover:bg-rose-100 transition whitespace-nowrap"><i class="fa-solid fa-camera mr-1"></i> Use Camera</button>
+                                        <input type="hidden" id="modal-item-photo-val" value="${item.photo}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Storage Box (Optional)</label>
+                                    <select id="modal-item-box" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                        <option value="">None (Independent)</option>
+                                        ${db.boxes.map(b => `<option value="${b.id}" ${item.boxId === b.id ? 'selected' : ''}>${b.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Rack / Cabinet / Drawer</label>
+                                    <select id="modal-item-rack" onchange="updateModalLayerSelector(this.value)" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                        <option value="">None</option>
+                                        ${db.racks.map(r => `<option value="${r.id}" ${item.rackId === r.id ? 'selected' : ''}>${r.name} (${r.layers}L)</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="modal-layer-container" class="${item.rackId ? '' : 'hidden'}">
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Select Specific Layer / Tier</label>
+                                <select id="modal-item-layer" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Notes / Description</label>
+                                <textarea id="modal-item-notes" rows="2" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="Add cute notes...">${item.notes || ''}</textarea>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeModal()" class="px-5 py-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition whitespace-nowrap">Cancel</button>
+                                <button type="submit" class="px-5 py-2 rounded-full text-xs font-semibold bg-rose-500 text-white hover:bg-rose-600 transition shadow-sm whitespace-nowrap">Save Treasure</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+            if (item.rackId) {
+                updateModalLayerSelector(item.rackId, item.layerIndex);
+            }
+        }
+
+        function openQuickAddCategoryModal() {
+            let html = `
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-lg text-rose-600">Add New Category ✨</h3>
+                            <button onclick="openEditItemModal(window._editingItemId || null)" class="w-8 h-8 rounded-full bg-blush-50 text-gray-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form onsubmit="saveQuickCategory(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Category Name</label>
+                                <input type="text" id="quick-cat-name" required class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="e.g. Vintage Toys">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Icon / Emoji</label>
+                                <input type="text" id="quick-cat-icon" value="✨" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="✨">
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-2">
+                                <button type="button" onclick="openEditItemModal(window._editingItemId || null)" class="px-4 py-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">Cancel</button>
+                                <button type="submit" class="px-4 py-2 rounded-full text-xs font-semibold bg-rose-500 text-white shadow-sm whitespace-nowrap">Add Category</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+        }
+
+        function saveQuickCategory(e) {
+            e.preventDefault();
+            const name = document.getElementById('quick-cat-name').value.trim();
+            const icon = document.getElementById('quick-cat-icon').value.trim() || 'tag';
+            if (!name) return;
+
+            const newCatId = 'cat-' + Date.now();
+            db.categories.push({
+                id: newCatId,
+                name,
+                icon,
+                color: '#f43f5e',
+                isCustomIcon: true
+            });
+            saveDB();
+            showToast("✨ New category added!");
+            openEditItemModal(window._editingItemId || null);
+            setTimeout(() => {
+                const catSelect = document.getElementById('modal-item-cat');
+                if (catSelect) catSelect.value = newCatId;
+            }, 50);
+        }
+
+        function updateModalLayerSelector(rackId, selectedLayer = 0) {
+            const container = document.getElementById('modal-layer-container');
+            const select = document.getElementById('modal-item-layer');
+            if (!rackId) {
+                container.classList.add('hidden');
                 return;
             }
-            alert(`Success! "${itemName}" has been saved to your HoardBox.`);
+            const rack = db.racks.find(r => r.id === rackId);
+            if (!rack) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            let opts = '';
+            for (let i = 0; i < rack.layers; i++) {
+                opts += `<option value="${i}" ${selectedLayer === i ? 'selected' : ''}>Layer ${i + 1}</option>`;
+            }
+            select.innerHTML = opts;
         }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('modal-item-img-preview').src = e.target.result;
+                    document.getElementById('modal-item-photo-val').value = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function triggerCameraCapture() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+            input.onchange = (e) => handleImageUpload(e);
+            input.click();
+        }
+
+        function saveItem(e, itemId) {
+            e.preventDefault();
+            const name = document.getElementById('modal-item-name').value;
+            const category = document.getElementById('modal-item-cat').value;
+            const photo = document.getElementById('modal-item-photo-val').value;
+            const boxId = document.getElementById('modal-item-box').value;
+            const rackId = document.getElementById('modal-item-rack').value;
+            const layerIndex = rackId ? parseInt(document.getElementById('modal-item-layer').value) : 0;
+            const notes = document.getElementById('modal-item-notes').value;
+
+            if (itemId) {
+                const item = db.items.find(i => i.id === itemId);
+                if (item) {
+                    item.name = name;
+                    item.category = category;
+                    item.photo = photo;
+                    item.boxId = boxId || null;
+                    item.rackId = rackId || null;
+                    item.layerIndex = rackId ? layerIndex : 0;
+                    item.notes = notes;
+                }
+            } else {
+                db.items.push({
+                    id: 'item-' + Date.now(),
+                    name,
+                    category,
+                    photo,
+                    boxId: boxId || null,
+                    rackId: rackId || null,
+                    layerIndex: rackId ? layerIndex : 0,
+                    notes
+                });
+            }
+
+            saveDB();
+            closeModal();
+            renderCurrentView();
+            showToast("✨ Item saved successfully!");
+        }
+
+        function confirmDeleteItem(itemId) {
+            if (confirm("Are you sure you want to delete this treasure?")) {
+                db.items = db.items.filter(i => i.id !== itemId);
+                saveDB();
+                renderCurrentView();
+                showToast("🗑️ Item deleted.");
+            }
+        }
+
+        function openAICameraModal() {
+            let html = `
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl text-center space-y-4">
+                        <div class="w-16 h-16 bg-blush-100 text-rose-500 rounded-full flex items-center justify-center text-2xl mx-auto animate-bounce">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-rose-600">AI Image Analyzer & OCR v3.8 📸</h3>
+                        <p class="text-xs text-gray-500">Upload any image or snap a photo of an item label. Tesseract.js will read the text and detect existing items in your HoardBox!</p>
+                        
+                        <div class="border-2 border-dashed border-blush-300 rounded-3xl p-6 bg-blush-50 space-y-3">
+                            <input type="file" id="ai-ocr-file-input" accept="image/*" onchange="processRealOCR(event)" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-rose-500 file:text-white hover:file:bg-rose-600">
+                        </div>
+
+                        <div id="ocr-results-area" class="hidden text-left bg-blush-50 p-3 rounded-2xl space-y-2">
+                            <p class="text-xs font-bold text-rose-600">Detected Text via OCR:</p>
+                            <p id="ocr-extracted-text" class="text-xs text-gray-700 bg-white p-2 rounded-xl border border-blush-200 max-h-24 overflow-y-auto font-mono"></p>
+                            <button id="ocr-action-btn" onclick="saveOCRExtractedItem()" class="w-full py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold hover:bg-rose-600 transition shadow-sm">Save as New Item ✨</button>
+                        </div>
+
+                        <button onclick="closeModal()" class="w-full py-2.5 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold hover:bg-gray-200 transition whitespace-nowrap">Close</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+        }
+
+        window._lastOCRData = { name: '', photo: '', matchedItemId: null };
+
+        async function processRealOCR(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const dataUrl = e.target.result;
+                window._lastOCRData.photo = dataUrl;
+
+                showToast("✨ Running Tesseract OCR image analysis...");
+                const resultArea = document.getElementById('ocr-results-area');
+                const textElem = document.getElementById('ocr-extracted-text');
+                resultArea.classList.remove('hidden');
+                textElem.innerText = "Analyzing text from image...";
+
+                try {
+                    const worker = await Tesseract.createWorker('eng');
+                    const ret = await worker.recognize(dataUrl);
+                    await worker.terminate();
+
+                    const cleanedText = ret.data.text.trim();
+                    const lines = cleanedText.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+
+                    let matchedItem = null;
+                    if (lines.length > 0) {
+                        matchedItem = db.items.find(item => {
+                            const itemNameLower = item.name.toLowerCase();
+                            return lines.some(line => {
+                                const lineLower = line.toLowerCase();
+                                return itemNameLower.includes(lineLower) || lineLower.includes(itemNameLower);
+                            });
+                        });
+                    }
+
+                    if (matchedItem) {
+                        window._lastOCRData.matchedItemId = matchedItem.id;
+                        window._lastOCRData.name = matchedItem.name;
+                        textElem.innerText = `✅ Existing item detected: "${matchedItem.name}"\n(OCR text: ${cleanedText || '[None]'})`;
+                        showToast("✨ Existing item detected in HoardBox!");
+                        const saveBtn = document.getElementById('ocr-action-btn');
+                        if (saveBtn) saveBtn.innerText = "Locate Existing Item 🔍";
+                    } else {
+                        window._lastOCRData.matchedItemId = null;
+                        window._lastOCRData.name = lines.length > 0 ? lines[0] : 'Scanned Treasure';
+                        textElem.innerText = cleanedText || "[No legible text detected]";
+                        showToast("✨ OCR Analysis complete!");
+                        const saveBtn = document.getElementById('ocr-action-btn');
+                        if (saveBtn) saveBtn.innerText = "Save as New Item ✨";
+                    }
+                } catch (err) {
+                    console.error("OCR Error:", err);
+                    textElem.innerText = "Error scanning image text.";
+                    window._lastOCRData.name = "Scanned Treasure";
+                    window._lastOCRData.matchedItemId = null;
+                    showToast("⚠️ OCR processing failed.");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveOCRExtractedItem() {
+            if (window._lastOCRData.matchedItemId) {
+                const itemId = window._lastOCRData.matchedItemId;
+                closeModal();
+                openLocateModal(itemId);
+                showToast("🔍 Located existing item in HoardBox!");
+                return;
+            }
+
+            const itemName = window._lastOCRData.name || 'Scanned Treasure';
+            const itemPhoto = window._lastOCRData.photo || 'https://placehold.co/200x200/ffe4e8/e11d48?text=Scanned';
+            
+            db.items.push({
+                id: 'item-' + Date.now(),
+                name: itemName,
+                category: db.categories[0]?.id || '',
+                photo: itemPhoto,
+                boxId: null,
+                rackId: null,
+                layerIndex: 0,
+                notes: 'Scanned via AI Image Analyzer OCR'
+            });
+
+            saveDB();
+            closeModal();
+            renderCurrentView();
+            showToast("✨ Extracted item saved to HoardBox!");
+        }
+
+        function openLocateModal(itemId) {
+            const item = db.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            let locationString = 'Unassigned storage';
+            if (item.boxId) {
+                const box = db.boxes.find(b => b.id === item.boxId);
+                if (box) locationString = `Stored inside Box: ${box.name}`;
+            } else if (item.rackId) {
+                const rack = db.racks.find(r => r.id === item.rackId);
+                if (rack) locationString = `Stored on ${rack.name}, Layer ${item.layerIndex + 1}`;
+            }
+
+            let html = `
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center space-y-4">
+                        <img src="${item.photo}" class="w-24 h-24 rounded-3xl object-cover mx-auto border-4 border-blush-100 shadow-md">
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
+                            <p class="text-xs text-rose-500 font-semibold mt-1"><i class="fa-solid fa-location-dot mr-1"></i> ${locationString}</p>
+                        </div>
+                        <p class="text-xs text-gray-400 bg-blush-50 p-3 rounded-2xl">${item.notes || 'No extra notes.'}</p>
+                        <button onclick="closeModal()" class="w-full py-2.5 bg-rose-500 text-white rounded-full text-xs font-semibold hover:bg-rose-600 transition shadow-sm whitespace-nowrap">Got it! ✨</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+        }
+
+        function openAddRackModal() { openEditRackModal(null); }
+        function openEditRackModal(rackId) {
+            const rack = rackId ? db.racks.find(r => r.id === rackId) : { name: '', type: 'pedestal', storageBehavior: 'fixed', icon: '🏛️', layers: 3 };
+            let html = `
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-rose-600">${rackId ? 'Edit Storage Rack' : 'Add Storage Rack'}</h3>
+                            <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-blush-50 text-gray-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form onsubmit="saveRack(event, '${rackId || ''}')" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Rack Name</label>
+                                <input type="text" id="modal-rack-name" required value="${rack.name}" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="e.g. Living Room Cabinet">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Rack Type</label>
+                                    <select id="modal-rack-type" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                        <option value="pedestal" ${rack.type === 'pedestal' ? 'selected' : ''}>Pedestal Cabinet</option>
+                                        <option value="drawer" ${rack.type === 'drawer' ? 'selected' : ''}>Pink Drawer</option>
+                                        <option value="metal" ${rack.type === 'metal' ? 'selected' : ''}>Metal Shelf</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Icon / Emoji</label>
+                                    <input type="text" id="modal-rack-icon" required value="${rack.icon || '🏛️'}" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="🏛️">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Storage Behavior</label>
+                                    <select id="modal-rack-behavior" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                        <option value="fixed" ${rack.storageBehavior === 'fixed' ? 'selected' : ''}>Fixed Layers Only</option>
+                                        <option value="multibox" ${rack.storageBehavior === 'multibox' ? 'selected' : ''}>Multi-Box / Multi-Item Shelf</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Number of Layers</label>
+                                    <input type="number" id="modal-rack-layers" min="1" max="12" required value="${rack.layers}" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                </div>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeModal()" class="px-5 py-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">Cancel</button>
+                                <button type="submit" class="px-5 py-2 rounded-full text-xs font-semibold bg-rose-500 text-white shadow-sm whitespace-nowrap">Save Rack</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+        }
+
+        function saveRack(e, rackId) {
+            e.preventDefault();
+            const name = document.getElementById('modal-rack-name').value;
+            const type = document.getElementById('modal-rack-type').value;
+            const icon = document.getElementById('modal-rack-icon').value;
+            const storageBehavior = document.getElementById('modal-rack-behavior').value;
+            const layers = parseInt(document.getElementById('modal-rack-layers').value);
+
+            if (rackId) {
+                const rack = db.racks.find(r => r.id === rackId);
+                if (rack) {
+                    rack.name = name;
+                    rack.type = type;
+                    rack.icon = icon;
+                    rack.storageBehavior = storageBehavior;
+                    rack.layers = layers;
+                }
+            } else {
+                db.racks.push({
+                    id: 'rack-' + Date.now(),
+                    name,
+                    type,
+                    icon,
+                    storageBehavior,
+                    layers,
+                    isCollapsed: false
+                });
+            }
+
+            saveDB();
+            closeModal();
+            renderCurrentView();
+            showToast("✨ Rack configuration saved!");
+        }
+
+        function confirmDeleteRack(rackId) {
+            if (confirm("Are you sure you want to delete this storage rack?")) {
+                db.racks = db.racks.filter(r => r.id !== rackId);
+                saveDB();
+                renderCurrentView();
+                showToast("🗑️ Rack deleted.");
+            }
+        }
+
+        function openQuickAddItemToLayer(rackId, layerIndex) {
+            openEditItemModal(null);
+            setTimeout(() => {
+                document.getElementById('modal-item-rack').value = rackId;
+                updateModalLayerSelector(rackId, layerIndex);
+                document.getElementById('modal-item-layer').value = layerIndex;
+            }, 100);
+        }
+
+        function openQuickAddBoxToLayer(rackId, layerIndex) {
+            const unassignedBox = db.boxes.find(b => !b.locationId);
+            if (unassignedBox) {
+                unassignedBox.locationId = rackId;
+                unassignedBox.layerIndex = layerIndex;
+                saveDB();
+                renderCurrentView();
+                showToast("📦 Box linked to shelf layer!");
+            } else {
+                showToast("⚠️ No unassigned boxes available. Create one first!");
+            }
+        }
+
+        function unlinkItemFromRack(itemId) {
+            const item = db.items.find(i => i.id === itemId);
+            if (item) {
+                item.rackId = null;
+                saveDB();
+                renderCurrentView();
+                showToast("✨ Item unlinked.");
+            }
+        }
+
+        function unlinkBox(boxId) {
+            const box = db.boxes.find(b => b.id === boxId);
+            if (box) {
+                box.locationId = null;
+                box.layerIndex = null;
+                saveDB();
+                renderCurrentView();
+                showToast("✨ Box unlinked.");
+            }
+        }
+
+        function openAddCategoryModal() { openEditCategoryModal(null); }
+        function openEditCategoryModal(catId) {
+            const cat = catId ? db.categories.find(c => c.id === catId) : { name: '', icon: 'cat', color: '#f43f5e', isCustomIcon: false };
+            const icons = ['cat', 'pencil', 'pump-soap', 'laptop', 'heart', 'gem', 'shirt', 'book', 'mug-hot', 'gift'];
+            const colors = ['#fda4b4', '#f472b6', '#fbcfe8', '#cbd5e1', '#f43f5e', '#ec4899', '#e11d48', '#fb7185'];
+
+            let html = `
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-rose-600">${catId ? 'Edit Category' : 'Add Category'}</h3>
+                            <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-blush-50 text-gray-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form onsubmit="saveCategory(event, '${catId || ''}')" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Category Name</label>
+                                <input type="text" id="modal-cat-name" required value="${cat.name}" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="e.g. Kawaii Stationery">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Select FontAwesome Icon</label>
+                                <div class="grid grid-cols-5 gap-2 mb-2">
+                                    ${icons.map(ic => `
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="cat-icon" value="${ic}" ${!cat.isCustomIcon && cat.icon === ic ? 'checked' : ''} class="peer sr-only">
+                                            <div class="w-10 h-10 rounded-2xl bg-blush-50 peer-checked:bg-rose-500 peer-checked:text-white text-gray-600 flex items-center justify-center transition">
+                                                <i class="fa-solid fa-${ic}"></i>
+                                            </div>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Or Add Custom Emoji / Icon</label>
+                                <input type="text" id="modal-cat-custom-icon" value="${cat.isCustomIcon ? cat.icon : ''}" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="e.g. 🦄 or 🎀">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Select Color</label>
+                                <div class="flex space-x-2">
+                                    ${colors.map(col => `
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="cat-color" value="${col}" ${cat.color === col ? 'checked' : ''} class="peer sr-only">
+                                            <div class="w-8 h-8 rounded-full border-2 border-transparent peer-checked:border-gray-800 transition" style="background-color: ${col}"></div>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeModal()" class="px-5 py-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">Cancel</button>
+                                <button type="submit" class="px-5 py-2 rounded-full text-xs font-semibold bg-rose-500 text-white shadow-sm whitespace-nowrap">Save Category</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+        }
+
+        function saveCategory(e, catId) {
+            e.preventDefault();
+            const name = document.getElementById('modal-cat-name').value;
+            const customIconInput = document.getElementById('modal-cat-custom-icon').value.trim();
+            const selectedRadio = document.querySelector('input[name="cat-icon"]:checked');
+            const color = document.querySelector('input[name="cat-color"]:checked')?.value || '#f43f5e';
+
+            let icon = 'tag';
+            let isCustomIcon = false;
+            if (customIconInput) {
+                icon = customIconInput;
+                isCustomIcon = true;
+            } else if (selectedRadio) {
+                icon = selectedRadio.value;
+                isCustomIcon = false;
+            }
+
+            if (catId) {
+                const c = db.categories.find(item => item.id === catId);
+                if (c) {
+                    c.name = name;
+                    c.icon = icon;
+                    c.color = color;
+                    c.isCustomIcon = isCustomIcon;
+                }
+            } else {
+                db.categories.push({
+                    id: 'cat-' + Date.now(),
+                    name,
+                    icon,
+                    color,
+                    isCustomIcon
+                });
+            }
+
+            saveDB();
+            closeModal();
+            renderCurrentView();
+            showToast("✨ Category saved!");
+        }
+
+        function confirmDeleteCategory(catId) {
+            if (confirm("Are you sure you want to delete this category?")) {
+                db.categories = db.categories.filter(c => c.id !== catId);
+                saveDB();
+                renderCurrentView();
+                showToast("🗑️ Category deleted.");
+            }
+        }
+
+        function openAddBoxModal() { openEditBoxModal(null); }
+        function openEditBoxModal(boxId) {
+            const box = boxId ? db.boxes.find(b => b.id === boxId) : { name: '', type: 'big-brown', icon: '📦', locationId: '' };
+            let html = `
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-rose-600">${boxId ? 'Edit Storage Box' : 'Add Storage Box'}</h3>
+                            <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-blush-50 text-gray-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form onsubmit="saveBox(event, '${boxId || ''}')" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Box Name</label>
+                                <input type="text" id="modal-box-name" required value="${box.name}" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="e.g. Winter Clothes Box">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Box Type</label>
+                                    <select id="modal-box-type" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                        <option value="big-brown" ${box.type === 'big-brown' ? 'selected' : ''}>Big Brown Box</option>
+                                        <option value="small-brown" ${box.type === 'small-brown' ? 'selected' : ''}>Small Brown Box</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Icon / Emoji</label>
+                                    <input type="text" id="modal-box-icon" required value="${box.icon || '📦'}" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="📦">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Assign to Rack/Shelf (Optional)</label>
+                                <select id="modal-box-rack" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                    <option value="">Unassigned (Independent)</option>
+                                    ${db.racks.map(r => `<option value="${r.id}" ${box.locationId === r.id ? 'selected' : ''}>${r.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3">
+                                <button type="button" onclick="closeModal()" class="px-5 py-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">Cancel</button>
+                                <button type="submit" class="px-5 py-2 rounded-full text-xs font-semibold bg-rose-500 text-white shadow-sm whitespace-nowrap">Save Box</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+        }
+
+        function saveBox(e, boxId) {
+            e.preventDefault();
+            const name = document.getElementById('modal-box-name').value;
+            const type = document.getElementById('modal-box-type').value;
+            const icon = document.getElementById('modal-box-icon').value;
+            const locationId = document.getElementById('modal-box-rack').value;
+
+            if (boxId) {
+                const b = db.boxes.find(item => item.id === boxId);
+                if (b) {
+                    b.name = name;
+                    b.type = type;
+                    b.icon = icon;
+                    b.locationId = locationId || null;
+                }
+            } else {
+                db.boxes.push({
+                    id: 'box-' + Date.now(),
+                    name,
+                    type,
+                    icon,
+                    locationId: locationId || null,
+                    layerIndex: 0
+                });
+            }
+
+            saveDB();
+            closeModal();
+            renderCurrentView();
+            showToast("✨ Box saved successfully!");
+        }
+
+        function confirmDeleteBox(boxId) {
+            if (confirm("Are you sure you want to delete this box? Items inside will become unassigned.")) {
+                db.items.forEach(i => { if (i.boxId === boxId) i.boxId = null; });
+                db.boxes = db.boxes.filter(b => b.id !== boxId);
+                saveDB();
+                renderCurrentView();
+                showToast("🗑️ Box deleted.");
+            }
+        }
+
+        function openBoxContentsModal(boxId) {
+            const box = db.boxes.find(b => b.id === boxId);
+            const boxItems = db.items.filter(i => i.boxId === boxId);
+            let html = `
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl max-h-[80vh] overflow-y-auto">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-rose-600">${box.icon || '📦'} ${box.name} Contents</h3>
+                            <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-blush-50 text-gray-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="space-y-2 mb-4">
+                            ${boxItems.length === 0 ? '<p class="text-xs text-gray-400 italic text-center py-4">No items inside this box yet.</p>' : boxItems.map(i => `
+                                <div class="flex items-center justify-between p-2.5 bg-blush-50 rounded-2xl">
+                                    <div class="flex items-center space-x-2">
+                                        <img src="${i.photo}" class="w-8 h-8 rounded-xl object-cover">
+                                        <span class="text-xs font-semibold text-gray-700">${i.name}</span>
+                                    </div>
+                                    <button onclick="removeItemFromBox('${i.id}')" class="text-xs text-rose-500 hover:underline whitespace-nowrap">Remove</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button onclick="closeModal()" class="w-full py-2.5 bg-rose-500 text-white rounded-full text-xs font-semibold whitespace-nowrap">Done ✨</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+        }
+
+        function removeItemFromBox(itemId) {
+            const item = db.items.find(i => i.id === itemId);
+            if (item) {
+                item.boxId = null;
+                saveDB();
+                closeModal();
+                renderBoxesView(document.getElementById('main-content'));
+                showToast("✨ Item removed from box.");
+            }
+        }
+
+        function openSettingsModal() {
+            let html = `
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-lg text-rose-600">Settings & Backup (v3.8) ⚙️</h3>
+                            <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-blush-50 text-gray-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="space-y-3">
+                            <button onclick="exportJSONBackup()" class="w-full py-3 bg-blush-50 text-rose-600 rounded-2xl text-xs font-semibold hover:bg-blush-100 transition flex items-center justify-center space-x-2 whitespace-nowrap">
+                                <i class="fa-solid fa-download"></i>
+                                <span>Export JSON Backup</span>
+                            </button>
+                            <label class="w-full py-3 bg-blush-50 text-rose-600 rounded-2xl text-xs font-semibold hover:bg-blush-100 transition flex items-center justify-center space-x-2 cursor-pointer whitespace-nowrap">
+                                <i class="fa-solid fa-upload"></i>
+                                <span>Import JSON Backup</span>
+                                <input type="file" accept=".json" onchange="importJSONBackup(event)" class="hidden">
+                            </label>
+                            <button onclick="if(confirm('Reset all data to factory defaults?')) { resetToFactoryDefaults(); closeModal(); }" class="w-full py-3 bg-red-50 text-red-500 rounded-2xl text-xs font-semibold hover:bg-red-100 transition flex items-center justify-center space-x-2 whitespace-nowrap">
+                                <i class="fa-solid fa-rotate-right"></i>
+                                <span>Factory Reset</span>
+                            </button>
+                        </div>
+                        <button onclick="closeModal()" class="w-full py-2.5 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold whitespace-nowrap">Close</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+        }
+
+        function exportJSONBackup() {
+            try {
+                const jsonStr = JSON.stringify(db, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.href = url;
+                downloadAnchor.download = `hoardbox_v38_backup_${Date.now()}.json`;
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                document.body.removeChild(downloadAnchor);
+                URL.revokeObjectURL(url);
+                showToast("✨ Complete JSON backup downloaded successfully!");
+            } catch (err) {
+                console.error("Export error:", err);
+                showToast("⚠️ Export failed. Please try again.");
+            }
+        }
+
+        function importJSONBackup(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (imported && imported.items && imported.racks) {
+                            db = imported;
+                            saveDB();
+                            renderCurrentView();
+                            closeModal();
+                            showToast("✨ Backup restored successfully!");
+                        } else {
+                            alert("Invalid backup file structure.");
+                        }
+                    } catch (err) {
+                        alert("Failed to parse JSON file.");
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        window.onload = function() {
+            loadDB();
+            renderCurrentView();
+        };
     </script>
 </body>
 </html>
