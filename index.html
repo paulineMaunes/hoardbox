@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HoardBox v3.7</title>
+    <title>HoardBox v3.8</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for cute icons -->
@@ -76,11 +76,11 @@
 <body class="bg-blush-50 min-h-screen pb-28 text-gray-700">
 
     <!-- Top Header -->
-    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-blush-200 px-4 py-3 flex items-center justify-between shadow-sm">
+    <header class="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-blush-200 px-4 py-3 flex items-center justify-between shadow-sm">
         <div class="flex items-center space-x-2">
             <span class="text-2xl animate-float">🎀</span>
             <div>
-                <h1 class="font-bold text-lg text-rose-600 leading-tight">HoardBox <span class="text-xs bg-blush-100 text-rose-500 px-2 py-0.5 rounded-full">v3.7</span></h1>
+                <h1 class="font-bold text-lg text-rose-600 leading-tight">HoardBox <span class="text-xs bg-blush-100 text-rose-500 px-2 py-0.5 rounded-full">v3.8</span></h1>
                 <p class="text-xs text-gray-400">Your aesthetic storage sanctuary ✨</p>
             </div>
         </div>
@@ -167,7 +167,7 @@
 
         function saveDB() {
             try {
-                localStorage.setItem('hoardbox_v37_db', JSON.stringify(db));
+                localStorage.setItem('hoardbox_v38_db', JSON.stringify(db));
             } catch (e) {
                 console.error("Storage save failed:", e);
             }
@@ -175,7 +175,7 @@
 
         function loadDB() {
             try {
-                const saved = localStorage.getItem('hoardbox_v37_db');
+                const saved = localStorage.getItem('hoardbox_v38_db');
                 if (saved) {
                     db = JSON.parse(saved);
                     if (!db.items) db.items = [];
@@ -239,7 +239,7 @@
                     <div class="flex flex-col sm:flex-row gap-2">
                         <div class="relative flex-1">
                             <i class="fa-solid fa-search absolute left-3 top-3.5 text-gray-400 text-sm"></i>
-                            <input type="text" id="item-search-input" value="${searchQuery}" oninput="filterItemsSearch(this.value)" placeholder="Search all hoards & treasures..." class="w-full pl-10 pr-4 py-2 bg-white rounded-full border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-sm">
+                            <input type="text" id="item-search-input" value="${searchQuery}" oninput="filterItemsSearch(this.value)" placeholder="Search all hoards & treasures (v3.8)..." class="w-full pl-10 pr-4 py-2 bg-white rounded-full border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-sm">
                         </div>
                         <select id="item-cat-filter" onchange="filterItemsCategory(this.value)" class="px-4 py-2 bg-white rounded-full border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-sm">
                             <option value="">All Categories</option>
@@ -320,7 +320,7 @@
                 <div class="space-y-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="font-bold text-lg text-rose-600">Storage Furniture & Racks 🗄️</h2>
+                            <h2 class="font-bold text-lg text-rose-600">Storage Furniture & Racks v3.8 🗄️</h2>
                             <p class="text-xs text-gray-400">Configure cabinets, drawers, and customizable shelf units</p>
                         </div>
                         <button onclick="openAddRackModal()" class="px-4 py-2 bg-rose-500 text-white rounded-full text-xs font-semibold hover:bg-rose-600 transition shadow-sm whitespace-nowrap">
@@ -365,7 +365,7 @@
                                     <span class="text-xs font-bold text-rose-600">Layer ${l + 1}</span>
                                     <div class="flex space-x-2">
                                         <button onclick="openQuickAddItemToLayer('${rack.id}', ${l})" class="text-[10px] bg-white text-rose-500 px-2 py-1 rounded-full border border-blush-200 hover:bg-blush-100 font-medium transition whitespace-nowrap">+ Add Item</button>
-                                        ${rack.storageBehavior === 'multibox' ? `<button onclick="openQuickAddBoxToLayer('${rack.id}', ${l})" class="text-[10px] bg-white text-rose-500 px-2 py-1 rounded-full border border-blush-200 hover:bg-blush-100 font-medium transition whitespace-nowrap">+ Add Box</button>` : ''}
+                                        ${rack.storageBehavior === 'multibox' ? `<button onclick="openQuickAddBoxToLayer('${rack.id}',${l})" class="text-[10px] bg-white text-rose-500 px-2 py-1 rounded-full border border-blush-200 hover:bg-blush-100 font-medium transition whitespace-nowrap">+ Add Box</button>` : ''}
                                     </div>
                                 </div>
                                 <div class="flex flex-wrap gap-2">
@@ -540,6 +540,7 @@
         }
 
         function openEditItemModal(itemId) {
+            window._editingItemId = itemId;
             const item = itemId ? db.items.find(i => i.id === itemId) : { name: '', category: db.categories[0]?.id || '', boxId: '', rackId: '', layerIndex: 0, photo: 'https://placehold.co/200x200/ffe4e8/e11d48?text=Item', notes: '' };
             
             let html = `
@@ -556,9 +557,12 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 mb-1">Category</label>
-                                <select id="modal-item-cat" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
-                                    ${db.categories.map(c => `<option value="${c.id}" ${item.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
-                                </select>
+                                <div class="flex space-x-2">
+                                    <select id="modal-item-cat" class="flex-1 px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400">
+                                        ${db.categories.map(c => `<option value="${c.id}" ${item.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                    </select>
+                                    <button type="button" onclick="openQuickAddCategoryModal()" class="px-4 py-2 bg-blush-100 text-rose-600 rounded-2xl text-xs font-semibold hover:bg-blush-200 transition whitespace-nowrap">+ New Category</button>
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 mb-1">Photo (Upload Image or Camera Capture)</label>
@@ -609,6 +613,57 @@
             if (item.rackId) {
                 updateModalLayerSelector(item.rackId, item.layerIndex);
             }
+        }
+
+        function openQuickAddCategoryModal() {
+            let html = `
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-lg text-rose-600">Add New Category ✨</h3>
+                            <button onclick="openEditItemModal(window._editingItemId || null)" class="w-8 h-8 rounded-full bg-blush-50 text-gray-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form onsubmit="saveQuickCategory(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Category Name</label>
+                                <input type="text" id="quick-cat-name" required class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="e.g. Vintage Toys">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Icon / Emoji</label>
+                                <input type="text" id="quick-cat-icon" value="✨" class="w-full px-4 py-2 bg-blush-50 rounded-2xl border border-blush-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-rose-400" placeholder="✨">
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-2">
+                                <button type="button" onclick="openEditItemModal(window._editingItemId || null)" class="px-4 py-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">Cancel</button>
+                                <button type="submit" class="px-4 py-2 rounded-full text-xs font-semibold bg-rose-500 text-white shadow-sm whitespace-nowrap">Add Category</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+        }
+
+        function saveQuickCategory(e) {
+            e.preventDefault();
+            const name = document.getElementById('quick-cat-name').value.trim();
+            const icon = document.getElementById('quick-cat-icon').value.trim() || 'tag';
+            if (!name) return;
+
+            const newCatId = 'cat-' + Date.now();
+            db.categories.push({
+                id: newCatId,
+                name,
+                icon,
+                color: '#f43f5e',
+                isCustomIcon: true
+            });
+            saveDB();
+            showToast("✨ New category added!");
+            openEditItemModal(window._editingItemId || null);
+            setTimeout(() => {
+                const catSelect = document.getElementById('modal-item-cat');
+                if (catSelect) catSelect.value = newCatId;
+            }, 50);
         }
 
         function updateModalLayerSelector(rackId, selectedLayer = 0) {
@@ -709,8 +764,8 @@
                         <div class="w-16 h-16 bg-blush-100 text-rose-500 rounded-full flex items-center justify-center text-2xl mx-auto animate-bounce">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </div>
-                        <h3 class="font-bold text-lg text-rose-600">AI Image Analyzer & OCR 📸</h3>
-                        <p class="text-xs text-gray-500">Upload any image or snap a photo of an item label. Tesseract.js will read the text and extract the item name!</p>
+                        <h3 class="font-bold text-lg text-rose-600">AI Image Analyzer & OCR v3.8 📸</h3>
+                        <p class="text-xs text-gray-500">Upload any image or snap a photo of an item label. Tesseract.js will read the text and detect existing items in your HoardBox!</p>
                         
                         <div class="border-2 border-dashed border-blush-300 rounded-3xl p-6 bg-blush-50 space-y-3">
                             <input type="file" id="ai-ocr-file-input" accept="image/*" onchange="processRealOCR(event)" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-rose-500 file:text-white hover:file:bg-rose-600">
@@ -719,7 +774,7 @@
                         <div id="ocr-results-area" class="hidden text-left bg-blush-50 p-3 rounded-2xl space-y-2">
                             <p class="text-xs font-bold text-rose-600">Detected Text via OCR:</p>
                             <p id="ocr-extracted-text" class="text-xs text-gray-700 bg-white p-2 rounded-xl border border-blush-200 max-h-24 overflow-y-auto font-mono"></p>
-                            <button onclick="saveOCRExtractedItem()" class="w-full py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold hover:bg-rose-600 transition shadow-sm">Save as New Item ✨</button>
+                            <button id="ocr-action-btn" onclick="saveOCRExtractedItem()" class="w-full py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold hover:bg-rose-600 transition shadow-sm">Save as New Item ✨</button>
                         </div>
 
                         <button onclick="closeModal()" class="w-full py-2.5 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold hover:bg-gray-200 transition whitespace-nowrap">Close</button>
@@ -729,7 +784,7 @@
             document.getElementById('modal-container').innerHTML = html;
         }
 
-        window._lastOCRData = { name: '', photo: '' };
+        window._lastOCRData = { name: '', photo: '', matchedItemId: null };
 
         async function processRealOCR(event) {
             const file = event.target.files[0];
@@ -752,16 +807,39 @@
                     await worker.terminate();
 
                     const cleanedText = ret.data.text.trim();
-                    textElem.innerText = cleanedText || "[No legible text detected]";
-                    
-                    // Extract first valid line as item name
-                    const lines = cleanedText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-                    window._lastOCRData.name = lines.length > 0 ? lines[0] : 'Scanned Treasure';
-                    showToast("✨ OCR Analysis complete!");
+                    const lines = cleanedText.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+
+                    let matchedItem = null;
+                    if (lines.length > 0) {
+                        matchedItem = db.items.find(item => {
+                            const itemNameLower = item.name.toLowerCase();
+                            return lines.some(line => {
+                                const lineLower = line.toLowerCase();
+                                return itemNameLower.includes(lineLower) || lineLower.includes(itemNameLower);
+                            });
+                        });
+                    }
+
+                    if (matchedItem) {
+                        window._lastOCRData.matchedItemId = matchedItem.id;
+                        window._lastOCRData.name = matchedItem.name;
+                        textElem.innerText = `✅ Existing item detected: "${matchedItem.name}"\n(OCR text: ${cleanedText || '[None]'})`;
+                        showToast("✨ Existing item detected in HoardBox!");
+                        const saveBtn = document.getElementById('ocr-action-btn');
+                        if (saveBtn) saveBtn.innerText = "Locate Existing Item 🔍";
+                    } else {
+                        window._lastOCRData.matchedItemId = null;
+                        window._lastOCRData.name = lines.length > 0 ? lines[0] : 'Scanned Treasure';
+                        textElem.innerText = cleanedText || "[No legible text detected]";
+                        showToast("✨ OCR Analysis complete!");
+                        const saveBtn = document.getElementById('ocr-action-btn');
+                        if (saveBtn) saveBtn.innerText = "Save as New Item ✨";
+                    }
                 } catch (err) {
                     console.error("OCR Error:", err);
                     textElem.innerText = "Error scanning image text.";
                     window._lastOCRData.name = "Scanned Treasure";
+                    window._lastOCRData.matchedItemId = null;
                     showToast("⚠️ OCR processing failed.");
                 }
             };
@@ -769,6 +847,14 @@
         }
 
         function saveOCRExtractedItem() {
+            if (window._lastOCRData.matchedItemId) {
+                const itemId = window._lastOCRData.matchedItemId;
+                closeModal();
+                openLocateModal(itemId);
+                showToast("🔍 Located existing item in HoardBox!");
+                return;
+            }
+
             const itemName = window._lastOCRData.name || 'Scanned Treasure';
             const itemPhoto = window._lastOCRData.photo || 'https://placehold.co/200x200/ffe4e8/e11d48?text=Scanned';
             
@@ -1195,7 +1281,7 @@
                 <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
                         <div class="flex items-center justify-between mb-2">
-                            <h3 class="font-bold text-lg text-rose-600">Settings & Backup ⚙️</h3>
+                            <h3 class="font-bold text-lg text-rose-600">Settings & Backup (v3.8) ⚙️</h3>
                             <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-blush-50 text-gray-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                         <div class="space-y-3">
@@ -1227,7 +1313,7 @@
                 const url = URL.createObjectURL(blob);
                 const downloadAnchor = document.createElement('a');
                 downloadAnchor.href = url;
-                downloadAnchor.download = `hoardbox_backup_${Date.now()}.json`;
+                downloadAnchor.download = `hoardbox_v38_backup_${Date.now()}.json`;
                 document.body.appendChild(downloadAnchor);
                 downloadAnchor.click();
                 document.body.removeChild(downloadAnchor);
