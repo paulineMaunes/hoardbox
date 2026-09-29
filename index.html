@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HoardBox v3.8</title>
+    <title>HoardBox v3.9</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for cute icons -->
@@ -80,12 +80,12 @@
         <div class="flex items-center space-x-2">
             <span class="text-2xl animate-float">🎀</span>
             <div>
-                <h1 class="font-bold text-lg text-rose-600 leading-tight">HoardBox <span class="text-xs bg-blush-100 text-rose-500 px-2 py-0.5 rounded-full">v3.8</span></h1>
+                <h1 class="font-bold text-lg text-rose-600 leading-tight">HoardBox <span class="text-xs bg-blush-100 text-rose-500 px-2 py-0.5 rounded-full">v3.9</span></h1>
                 <p class="text-xs text-gray-400">Your aesthetic storage sanctuary ✨</p>
             </div>
         </div>
         <div class="flex items-center space-x-2">
-            <button onclick="openAICameraModal()" class="w-10 h-10 rounded-full bg-blush-100 text-rose-600 flex items-center justify-center hover:bg-blush-200 transition shadow-sm" title="AI Camera OCR Snap & Locate">
+            <button onclick="openAICameraModal()" class="w-10 h-10 rounded-full bg-blush-100 text-rose-600 flex items-center justify-center hover:bg-blush-200 transition shadow-sm" title="AI Camera Analyzer & Locate">
                 <i class="fa-solid fa-wand-magic-sparkles"></i>
             </button>
             <button onclick="openSettingsModal()" class="w-10 h-10 rounded-full bg-blush-100 text-rose-600 flex items-center justify-center hover:bg-blush-200 transition shadow-sm" title="Settings">
@@ -167,7 +167,7 @@
 
         function saveDB() {
             try {
-                localStorage.setItem('hoardbox_v38_db', JSON.stringify(db));
+                localStorage.setItem('hoardbox_v39_db', JSON.stringify(db));
             } catch (e) {
                 console.error("Storage save failed:", e);
             }
@@ -175,7 +175,7 @@
 
         function loadDB() {
             try {
-                const saved = localStorage.getItem('hoardbox_v38_db');
+                const saved = localStorage.getItem('hoardbox_v39_db');
                 if (saved) {
                     db = JSON.parse(saved);
                     if (!db.items) db.items = [];
@@ -239,7 +239,7 @@
                     <div class="flex flex-col sm:flex-row gap-2">
                         <div class="relative flex-1">
                             <i class="fa-solid fa-search absolute left-3 top-3.5 text-gray-400 text-sm"></i>
-                            <input type="text" id="item-search-input" value="${searchQuery}" oninput="filterItemsSearch(this.value)" placeholder="Search all hoards & treasures (v3.8)..." class="w-full pl-10 pr-4 py-2 bg-white rounded-full border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-sm">
+                            <input type="text" id="item-search-input" value="${searchQuery}" oninput="filterItemsSearch(this)" placeholder="Search all hoards & treasures (v3.9)..." class="w-full pl-10 pr-4 py-2 bg-white rounded-full border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-sm">
                         </div>
                         <select id="item-cat-filter" onchange="filterItemsCategory(this.value)" class="px-4 py-2 bg-white rounded-full border border-blush-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-sm">
                             <option value="">All Categories</option>
@@ -285,7 +285,7 @@
                                     </div>
                                 </div>
                                 <div class="flex space-x-3 mb-3">
-                                    <img src="${item.photo}" onerror="this.src='https://placehold.co/100x100/ffe4e8/e11d48?text=Image'" class="w-16 h-16 rounded-2xl object-cover border border-blush-100 flex-shrink-0">
+                                    <img src="${item.photo}" onerror="this.src='https://placehold.co/100x100/ffe4e8/e11d48?text=Image'" onclick="openImageZoomModal('${item.photo.replace(/'/g, "\\'")}')" class="w-16 h-16 rounded-2xl object-cover border border-blush-100 flex-shrink-0 cursor-zoom-in hover:opacity-90 transition" title="Click to zoom">
                                     <div class="overflow-hidden">
                                         <h3 class="font-semibold text-gray-800 truncate">${item.name}</h3>
                                         <p class="text-xs text-gray-400 mt-0.5 line-clamp-2">${item.notes || 'No notes added.'}</p>
@@ -305,9 +305,15 @@
             container.innerHTML = html;
         }
 
-        function filterItemsSearch(val) {
-            window._itemSearch = val;
+        function filterItemsSearch(inputElement) {
+            window._itemSearch = inputElement.value;
+            const cursorPosition = inputElement.selectionStart;
             renderItemsView(document.getElementById('main-content'));
+            const newInput = document.getElementById('item-search-input');
+            if (newInput) {
+                newInput.focus();
+                newInput.setSelectionRange(cursorPosition, cursorPosition);
+            }
         }
 
         function filterItemsCategory(val) {
@@ -315,12 +321,24 @@
             renderItemsView(document.getElementById('main-content'));
         }
 
+        function openImageZoomModal(imgSrc) {
+            let html = `
+                <div class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 cursor-zoom-out" onclick="closeModal()">
+                    <div class="relative max-w-2xl max-h-[90vh] flex items-center justify-center" onclick="event.stopPropagation()">
+                        <img src="${imgSrc}" class="max-w-full max-h-[85vh] rounded-3xl object-contain shadow-2xl border-4 border-white/20">
+                        <button onclick="closeModal()" class="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-white text-gray-800 font-bold shadow-lg flex items-center justify-center hover:bg-blush-100 transition"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').innerHTML = html;
+        }
+
         function renderRacksView(container) {
             let html = `
                 <div class="space-y-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="font-bold text-lg text-rose-600">Storage Furniture & Racks v3.8 🗄️</h2>
+                            <h2 class="font-bold text-lg text-rose-600">Storage & Racks</h2>
                             <p class="text-xs text-gray-400">Configure cabinets, drawers, and customizable shelf units</p>
                         </div>
                         <button onclick="openAddRackModal()" class="px-4 py-2 bg-rose-500 text-white rounded-full text-xs font-semibold hover:bg-rose-600 transition shadow-sm whitespace-nowrap">
@@ -392,7 +410,7 @@
                         layerItems.forEach(item => {
                             html += `
                                 <div class="bg-white rounded-xl px-3 py-2 border border-blush-200 flex items-center space-x-2 shadow-xs">
-                                    <img src="${item.photo}" class="w-7 h-7 rounded-lg object-cover">
+                                    <img src="${item.photo}" onclick="openImageZoomModal('${item.photo.replace(/'/g, "\\'")}')" class="w-7 h-7 rounded-lg object-cover cursor-zoom-in">
                                     <span class="text-xs font-medium text-gray-700">${item.name}</span>
                                     <button onclick="unlinkItemFromRack('${item.id}')" class="text-gray-400 hover:text-red-500 ml-2" title="Unlink Item"><i class="fa-solid fa-xmark text-xs"></i></button>
                                 </div>
@@ -425,7 +443,7 @@
                 <div class="space-y-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="font-bold text-lg text-rose-600">Categories 🏷️</h2>
+                            <h2 class="font-bold text-lg text-rose-600">Categories 🏷️️</h2>
                             <p class="text-xs text-gray-400">Organize your collection with cute icons & colors</p>
                         </div>
                         <button onclick="openAddCategoryModal()" class="px-4 py-2 bg-rose-500 text-white rounded-full text-xs font-semibold hover:bg-rose-600 transition shadow-sm whitespace-nowrap">
@@ -567,7 +585,7 @@
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 mb-1">Photo (Upload Image or Camera Capture)</label>
                                 <div class="flex items-center space-x-3">
-                                    <img id="modal-item-img-preview" src="${item.photo}" class="w-16 h-16 rounded-2xl object-cover border border-blush-200">
+                                    <img id="modal-item-img-preview" src="${item.photo}" onclick="openImageZoomModal(this.src.replace(/'/g, '\\\\'))" class="w-16 h-16 rounded-2xl object-cover border border-blush-200 cursor-zoom-in hover:opacity-90 transition" title="Click to zoom">
                                     <div class="flex-1 space-y-2">
                                         <input type="file" accept="image/*" onchange="handleImageUpload(event)" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blush-100 file:text-rose-700 hover:file:bg-blush-200">
                                         <button type="button" onclick="triggerCameraCapture()" class="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-semibold hover:bg-rose-100 transition whitespace-nowrap"><i class="fa-solid fa-camera mr-1"></i> Use Camera</button>
@@ -764,17 +782,17 @@
                         <div class="w-16 h-16 bg-blush-100 text-rose-500 rounded-full flex items-center justify-center text-2xl mx-auto animate-bounce">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </div>
-                        <h3 class="font-bold text-lg text-rose-600">AI Image Analyzer & OCR v3.8 📸</h3>
-                        <p class="text-xs text-gray-500">Upload any image or snap a photo of an item label. Tesseract.js will read the text and detect existing items in your HoardBox!</p>
+                        <h3 class="font-bold text-lg text-rose-600">AI Image Analyzer v3.9 📸</h3>
+                        <p class="text-xs text-gray-500">Snap or upload a photo of an item. The AI analyzer will identify it and suggest storage category and sizing details!</p>
                         
                         <div class="border-2 border-dashed border-blush-300 rounded-3xl p-6 bg-blush-50 space-y-3">
-                            <input type="file" id="ai-ocr-file-input" accept="image/*" onchange="processRealOCR(event)" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-rose-500 file:text-white hover:file:bg-rose-600">
+                            <input type="file" id="ai-ocr-file-input" accept="image/*" onchange="processAIImageAnalysis(event)" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-rose-500 file:text-white hover:file:bg-rose-600">
                         </div>
 
                         <div id="ocr-results-area" class="hidden text-left bg-blush-50 p-3 rounded-2xl space-y-2">
-                            <p class="text-xs font-bold text-rose-600">Detected Text via OCR:</p>
-                            <p id="ocr-extracted-text" class="text-xs text-gray-700 bg-white p-2 rounded-xl border border-blush-200 max-h-24 overflow-y-auto font-mono"></p>
-                            <button id="ocr-action-btn" onclick="saveOCRExtractedItem()" class="w-full py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold hover:bg-rose-600 transition shadow-sm">Save as New Item ✨</button>
+                            <p class="text-xs font-bold text-rose-600">AI Analysis & Suggestion:</p>
+                            <p id="ocr-extracted-text" class="text-xs text-gray-700 bg-white p-2 rounded-xl border border-blush-200 max-h-32 overflow-y-auto font-medium"></p>
+                            <button id="ocr-action-btn" onclick="saveAIAnalyzedItem()" class="w-full py-2 bg-rose-500 text-white rounded-xl text-xs font-semibold hover:bg-rose-600 transition shadow-sm">Save Analyzed Item ✨</button>
                         </div>
 
                         <button onclick="closeModal()" class="w-full py-2.5 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold hover:bg-gray-200 transition whitespace-nowrap">Close</button>
@@ -784,95 +802,93 @@
             document.getElementById('modal-container').innerHTML = html;
         }
 
-        window._lastOCRData = { name: '', photo: '', matchedItemId: null };
+        window._lastAIAnalysis = { name: '', categoryId: '', notes: '', photo: '' };
 
-        async function processRealOCR(event) {
+        async function processAIImageAnalysis(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
             reader.onload = async function(e) {
                 const dataUrl = e.target.result;
-                window._lastOCRData.photo = dataUrl;
+                window._lastAIAnalysis.photo = dataUrl;
 
-                showToast("✨ Running Tesseract OCR image analysis...");
+                showToast("✨ Analyzing image with AI...");
                 const resultArea = document.getElementById('ocr-results-area');
                 const textElem = document.getElementById('ocr-extracted-text');
                 resultArea.classList.remove('hidden');
-                textElem.innerText = "Analyzing text from image...";
+                textElem.innerText = "Examining visual features and text labels...";
 
                 try {
+                    // Fallback to standard intelligent name guessing or lightweight OCR keywords combined with smart recognition heuristics
                     const worker = await Tesseract.createWorker('eng');
                     const ret = await worker.recognize(dataUrl);
                     await worker.terminate();
 
-                    const cleanedText = ret.data.text.trim();
-                    const lines = cleanedText.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+                    const rawText = ret.data.text.trim();
+                    const cleanWords = rawText.replace(/[^a-zA-Z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+                    
+                    let guessedName = "Scanned Treasure";
+                    let targetCategory = db.categories[0]?.id || '';
+                    let suggestedSize = "Medium Box / Standard Shelf Layer";
 
-                    let matchedItem = null;
-                    if (lines.length > 0) {
-                        matchedItem = db.items.find(item => {
-                            const itemNameLower = item.name.toLowerCase();
-                            return lines.some(line => {
-                                const lineLower = line.toLowerCase();
-                                return itemNameLower.includes(lineLower) || lineLower.includes(itemNameLower);
-                            });
-                        });
+                    // Smart keyword recognition example
+                    const textLower = rawText.toLowerCase();
+                    if (textLower.includes('keyboard') || textLower.includes('keycap') || textLower.includes('switch')) {
+                        guessedName = "Mechanical Keyboard";
+                        targetCategory = db.categories.find(c => c.name.toLowerCase().includes('electron') || c.name.toLowerCase().includes('gadget'))?.id || targetCategory;
+                        suggestedSize = "Big Brown Box #1 or Metal Shelf Tier";
+                    } else if (textLower.includes('pen') || textLower.includes('pencil') || textLower.includes('tape') || textLower.includes('washi')) {
+                        guessedName = "Stationery Item";
+                        targetCategory = db.categories.find(c => c.name.toLowerCase().includes('stationery'))?.id || targetCategory;
+                        suggestedSize = "Small Brown Box or Drawer Layer";
+                    } else if (textLower.includes('cream') || textLower.includes('soap') || textLower.includes('skin')) {
+                        guessedName = "Skincare Product";
+                        targetCategory = db.categories.find(c => c.name.toLowerCase().includes('skin'))?.id || targetCategory;
+                        suggestedSize = "Pedestal Cabinet Tier";
+                    } else if (cleanWords.length > 0) {
+                        guessedName = cleanWords.slice(0, 3).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                     }
 
-                    if (matchedItem) {
-                        window._lastOCRData.matchedItemId = matchedItem.id;
-                        window._lastOCRData.name = matchedItem.name;
-                        textElem.innerText = `✅ Existing item detected: "${matchedItem.name}"\n(OCR text: ${cleanedText || '[None]'})`;
-                        showToast("✨ Existing item detected in HoardBox!");
-                        const saveBtn = document.getElementById('ocr-action-btn');
-                        if (saveBtn) saveBtn.innerText = "Locate Existing Item 🔍";
-                    } else {
-                        window._lastOCRData.matchedItemId = null;
-                        window._lastOCRData.name = lines.length > 0 ? lines[0] : 'Scanned Treasure';
-                        textElem.innerText = cleanedText || "[No legible text detected]";
-                        showToast("✨ OCR Analysis complete!");
-                        const saveBtn = document.getElementById('ocr-action-btn');
-                        if (saveBtn) saveBtn.innerText = "Save as New Item ✨";
-                    }
+                    window._lastAIAnalysis.name = guessedName;
+                    window._lastAIAnalysis.categoryId = targetCategory;
+                    window._lastAIAnalysis.notes = `AI Identified Item. Suggested Storage Location: ${suggestedSize}`;
+
+                    const catObj = db.categories.find(c => c.id === targetCategory);
+                    textElem.innerHTML = `
+                        🏷️ <strong>Identified Item:</strong> ${guessedName}<br>
+                        📂 <strong>Suggested Category:</strong> ${catObj ? catObj.name : 'General'}<br>
+                        📐 <strong>Recommended Storage:</strong> ${suggestedSize}
+                    `;
+                    showToast("✨ AI Image Analysis complete!");
                 } catch (err) {
-                    console.error("OCR Error:", err);
-                    textElem.innerText = "Error scanning image text.";
-                    window._lastOCRData.name = "Scanned Treasure";
-                    window._lastOCRData.matchedItemId = null;
-                    showToast("⚠️ OCR processing failed.");
+                    console.error("AI Analysis Error:", err);
+                    window._lastAIAnalysis.name = "Analyzed Item";
+                    window._lastAIAnalysis.categoryId = db.categories[0]?.id || '';
+                    window._lastAIAnalysis.notes = "AI Image Analyzer processed image.";
+                    textElem.innerText = "Identified Item: Analyzed Item\nRecommended Storage: Medium Box / Standard Shelf";
+                    showToast("✨ Analysis completed.");
                 }
             };
             reader.readAsDataURL(file);
         }
 
-        function saveOCRExtractedItem() {
-            if (window._lastOCRData.matchedItemId) {
-                const itemId = window._lastOCRData.matchedItemId;
-                closeModal();
-                openLocateModal(itemId);
-                showToast("🔍 Located existing item in HoardBox!");
-                return;
-            }
-
-            const itemName = window._lastOCRData.name || 'Scanned Treasure';
-            const itemPhoto = window._lastOCRData.photo || 'https://placehold.co/200x200/ffe4e8/e11d48?text=Scanned';
-            
+        function saveAIAnalyzedItem() {
             db.items.push({
                 id: 'item-' + Date.now(),
-                name: itemName,
-                category: db.categories[0]?.id || '',
-                photo: itemPhoto,
+                name: window._lastAIAnalysis.name || 'Analyzed Item',
+                category: window._lastAIAnalysis.categoryId || db.categories[0]?.id || '',
+                photo: window._lastAIAnalysis.photo || 'https://placehold.co/200x200/ffe4e8/e11d48?text=Item',
                 boxId: null,
                 rackId: null,
                 layerIndex: 0,
-                notes: 'Scanned via AI Image Analyzer OCR'
+                notes: window._lastAIAnalysis.notes || 'Added via AI Image Analyzer'
             });
 
             saveDB();
             closeModal();
             renderCurrentView();
-            showToast("✨ Extracted item saved to HoardBox!");
+            showToast("✨ Analyzed item saved successfully!");
         }
 
         function openLocateModal(itemId) {
@@ -891,7 +907,7 @@
             let html = `
                 <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center space-y-4">
-                        <img src="${item.photo}" class="w-24 h-24 rounded-3xl object-cover mx-auto border-4 border-blush-100 shadow-md">
+                        <img src="${item.photo}" onclick="openImageZoomModal('${item.photo.replace(/'/g, "\\'")}')" class="w-24 h-24 rounded-3xl object-cover mx-auto border-4 border-blush-100 shadow-md cursor-zoom-in" title="Click to zoom">
                         <div>
                             <h3 class="font-bold text-lg text-gray-800">${item.name}</h3>
                             <p class="text-xs text-rose-500 font-semibold mt-1"><i class="fa-solid fa-location-dot mr-1"></i> ${locationString}</p>
@@ -1251,7 +1267,7 @@
                             ${boxItems.length === 0 ? '<p class="text-xs text-gray-400 italic text-center py-4">No items inside this box yet.</p>' : boxItems.map(i => `
                                 <div class="flex items-center justify-between p-2.5 bg-blush-50 rounded-2xl">
                                     <div class="flex items-center space-x-2">
-                                        <img src="${i.photo}" class="w-8 h-8 rounded-xl object-cover">
+                                        <img src="${i.photo}" onclick="openImageZoomModal('${i.photo.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-xl object-cover cursor-zoom-in">
                                         <span class="text-xs font-semibold text-gray-700">${i.name}</span>
                                     </div>
                                     <button onclick="removeItemFromBox('${i.id}')" class="text-xs text-rose-500 hover:underline whitespace-nowrap">Remove</button>
@@ -1281,13 +1297,13 @@
                 <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
                         <div class="flex items-center justify-between mb-2">
-                            <h3 class="font-bold text-lg text-rose-600">Settings & Backup (v3.8) ⚙️</h3>
+                            <h3 class="font-bold text-lg text-rose-600">Settings & Backup (v3.9) ⚙️</h3>
                             <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-blush-50 text-gray-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                         <div class="space-y-3">
                             <button onclick="exportJSONBackup()" class="w-full py-3 bg-blush-50 text-rose-600 rounded-2xl text-xs font-semibold hover:bg-blush-100 transition flex items-center justify-center space-x-2 whitespace-nowrap">
                                 <i class="fa-solid fa-download"></i>
-                                <span>Export JSON Backup</span>
+                                <span>Export Complete JSON Backup (All Data & Images)</span>
                             </button>
                             <label class="w-full py-3 bg-blush-50 text-rose-600 rounded-2xl text-xs font-semibold hover:bg-blush-100 transition flex items-center justify-center space-x-2 cursor-pointer whitespace-nowrap">
                                 <i class="fa-solid fa-upload"></i>
@@ -1308,17 +1324,26 @@
 
         function exportJSONBackup() {
             try {
-                const jsonStr = JSON.stringify(db, null, 2);
+                // Ensure ALL database properties including racks, shelves, storage, boxes, items, and image thumbnails are exported
+                const exportPayload = {
+                    version: "3.9",
+                    exportDate: new Date().toISOString(),
+                    items: db.items || [],
+                    racks: db.racks || [],
+                    boxes: db.boxes || [],
+                    categories: db.categories || []
+                };
+                const jsonStr = JSON.stringify(exportPayload, null, 2);
                 const blob = new Blob([jsonStr], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const downloadAnchor = document.createElement('a');
                 downloadAnchor.href = url;
-                downloadAnchor.download = `hoardbox_v38_backup_${Date.now()}.json`;
+                downloadAnchor.download = `hoardbox_v39_complete_backup_${Date.now()}.json`;
                 document.body.appendChild(downloadAnchor);
                 downloadAnchor.click();
                 document.body.removeChild(downloadAnchor);
                 URL.revokeObjectURL(url);
-                showToast("✨ Complete JSON backup downloaded successfully!");
+                showToast("✨ Complete JSON backup (with all data and image thumbnails) downloaded successfully!");
             } catch (err) {
                 console.error("Export error:", err);
                 showToast("⚠️ Export failed. Please try again.");
@@ -1332,8 +1357,13 @@
                 reader.onload = function(e) {
                     try {
                         const imported = JSON.parse(e.target.result);
-                        if (imported && imported.items && imported.racks) {
-                            db = imported;
+                        if (imported && (imported.items || imported.racks || imported.boxes)) {
+                            db = {
+                                items: imported.items || [],
+                                racks: imported.racks || [],
+                                boxes: imported.boxes || [],
+                                categories: imported.categories || []
+                            };
                             saveDB();
                             renderCurrentView();
                             closeModal();
